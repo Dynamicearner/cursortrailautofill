@@ -6,7 +6,7 @@ Chrome extension to automatically fill Stripe checkout forms with generated card
 
 ## ✨ Features
 
-- 🚀 Auto-generates valid test cards from AKR Gen
+- 🚀 Auto-generates valid test cards from cardbingenerator.com API
 - 🎯 Automatically detects and fills Stripe checkout pages
 - 🌍 Fixed US billing address (Brooklyn, New York)
 - 👤 Random name generation for each transaction
@@ -49,21 +49,20 @@ Chrome extension to automatically fill Stripe checkout forms with generated card
 
 1. **Open a Stripe checkout page**
 2. **Click the extension icon** in Chrome toolbar
-3. **BIN is pre-filled** with default value `552461xxxxxxxxxx`
+3. **BIN is pre-filled** with default value `552461`
 4. **Click "Generate & Auto Fill"** button
 5. **Wait** - Extension will:
-   - Open card generator in background tab
+   - Call cardbingenerator.com API
    - Generate cards automatically
-   - Close generator tab
+   - Store cards and billing data
    - Fill all details on Stripe page
 6. **Done!** All card and billing details are filled
 
 ### How It Works:
-1. Opens AKR Gen in background tab
-2. Inputs BIN and generates test cards
+1. Calls cardbingenerator.com API with BIN
+2. Receives generated test cards
 3. Stores cards and random billing data
-4. Closes background tab automatically
-5. Fills Stripe form with stored data
+4. Automatically fills Stripe form with stored data
 
 ## ❓ Troubleshooting
 
@@ -85,7 +84,7 @@ Chrome extension to automatically fill Stripe checkout forms with generated card
 ## 🔗 Useful Links
 
 - **Urban VPN Extension:** [Install Here](https://chromewebstore.google.com/detail/urban-vpn-proxy/eppiocemhmnlbhjplcgkofciiegomcon?hl=en)
-- **AKR Gen:** [Card Generator](https://akr-gen.bigfk.com/)
+- **Card Generator API:** [cardbingenerator.com](https://cardbingenerator.com/)
 - **Telegram Support:** [@ismartsumit](https://t.me/ismartsumit)
 - **Free Temp Services:** [Telegram Bot](https://telegram.dog/cursortempnumber)
 

@@ -5,11 +5,15 @@ const statusDiv = document.getElementById('status');
 const savedBinDiv = document.getElementById('savedBin');
 const savedBinValue = document.getElementById('savedBinValue');
 
-const DEFAULT_BIN = '625967xxxxxxxxxx';
+const DEFAULT_BIN = '552461';
 
-chrome.storage.local.get(['savedBin'], function(result) {
-  if (result.savedBin) {
-    binInput.value = result.savedBin;
+function cleanBin(bin) {
+  return bin.replace(/x/gi, '').replace(/\s+/g, '').trim();
+}
+
+chrome.storage.local.get(['defaultbincursorvo1'], function(result) {
+  if (result.defaultbincursorvo1) {
+    binInput.value = result.defaultbincursorvo1;
   } else {
     binInput.value = DEFAULT_BIN;
   }
@@ -18,7 +22,7 @@ chrome.storage.local.get(['savedBin'], function(result) {
 });
 
 generateBtn.addEventListener('click', async () => {
-  const bin = binInput.value.trim();
+  const bin = cleanBin(binInput.value);
   
   if (!bin) {
     updateStatus('Please enter a BIN number', 'error');
@@ -40,10 +44,10 @@ generateBtn.addEventListener('click', async () => {
   const stripeTabId = tab.id;
   
   generateBtn.disabled = true;
-  updateStatus('Generating cards from AKR Gen...', 'loading');
+  updateStatus('Generating cards from API...', 'loading');
   
   chrome.storage.local.set({ 
-    savedBin: bin,
+    defaultbincursorvo1: bin,
     stripeTabId: stripeTabId
   }, function() {
     savedBinDiv.style.display = 'block';
@@ -69,7 +73,7 @@ generateBtn.addEventListener('click', async () => {
 });
 
 clearBtn.addEventListener('click', () => {
-  chrome.storage.local.remove(['savedBin', 'generatedCards'], function() {
+  chrome.storage.local.remove(['defaultbincursorvo1', 'generatedCards'], function() {
     binInput.value = '';
     savedBinDiv.style.display = 'none';
     updateStatus('Cleared saved data', 'success');
@@ -86,4 +90,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     updateStatus(request.message, request.type);
   }
 });
-

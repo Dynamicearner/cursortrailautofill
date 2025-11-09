@@ -178,6 +178,41 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
+.vpn-warning {
+  border-left: 4px solid #f39c12;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+}
+
+.vpn-warning h4 {
+  color: #f39c12;
+}
+
+.critical-warning {
+  border-left: 4px solid #e74c3c;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+}
+
+.critical-warning h4 {
+  color: #e74c3c;
+}
+
+.critical-warning p {
+  margin: 6px 0;
+  font-size: 13px;
+  color: #c62828;
+  line-height: 1.6;
+}
+
+.vpn-link {
+  color: #667eea;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.vpn-link:hover {
+  color: #764ba2;
+}
+
 .info h4 {
   margin-bottom: 10px;
   color: #667eea;
