@@ -27,7 +27,7 @@ function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-const EXTENSION_VERSION = '2.0';
+const EXTENSION_VERSION = '3.0';
 const FIXED_ADDRESS = '69 Adams Street';
 const FIXED_CITY = 'Brooklyn';
 const FIXED_ZIP = '11201';
@@ -44,13 +44,17 @@ function generateRandomData() {
   };
 }
 
+function cleanBin(bin) {
+  return bin.replace(/x/gi, '').replace(/\s+/g, '').trim();
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['extensionVersion'], (result) => {
     if (result.extensionVersion !== EXTENSION_VERSION) {
       chrome.storage.local.clear(() => {
         chrome.storage.local.set({ 
           extensionVersion: EXTENSION_VERSION,
-          savedBin: '552461xxxxxxxxxx'
+          defaultbincursorvo1: '552461'
         });
       });
     }
@@ -63,111 +67,84 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'generateCards') {
-    generateCardsFromAKR(request.bin, request.stripeTabId, sendResponse);
+    generateCardsFromAPI(request.bin, request.stripeTabId, sendResponse);
     return true;
   }
 });
 
-async function generateCardsFromAKR(bin, stripeTabId, callback) {
+async function generateCardsFromAPI(bin, stripeTabId, callback) {
   try {
-    const tab = await chrome.tabs.create({
-      url: 'https://akr-gen.bigfk.com/',
-      active: false
+    const cleanedBin = cleanBin(bin);
+    
+    if (cleanedBin.length < 6) {
+      callback({ success: false, error: 'BIN must be at least 6 digits' });
+      return;
+    }
+
+    const payload = {
+      action: "generateAdvance",
+      customBin: cleanedBin,
+      format: "pipe",
+      quantity: 10,
+      includeDate: true,
+      includeCvv: true,
+      customCvv: "",
+      expirationMonth: "random",
+      expirationYear: "random",
+      includeMoney: false,
+      currency: "USD",
+      balance: "500-1000"
+    };
+
+    const response = await fetch('https://cardbingenerator.com/api.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Origin': 'https://cardbingenerator.com',
+        'Referer': 'https://cardbingenerator.com/index.php?page=generator'
+      },
+      body: JSON.stringify(payload)
     });
+
+    if (!response.ok) {
+      callback({ success: false, error: 'API request failed' });
+      return;
+    }
+
+    const data = await response.json();
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: fillBINAndGenerate,
-      args: [bin]
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: getGeneratedCards
-    });
-    
-    await chrome.tabs.remove(tab.id);
-    
-    if (results && results[0] && results[0].result) {
-      const cards = parseCards(results[0].result);
+    if (data.success && data.data && data.data.cards) {
+      const cards = data.data.cards.map((card, idx) => ({
+        serial_number: idx + 1,
+        card_number: card.cardNumber,
+        expiry_month: card.expMonth,
+        expiry_year: card.expYear,
+        cvv: card.cvv,
+        full_format: `${card.cardNumber}|${card.expMonth}|${card.expYear}|${card.cvv}`
+      }));
+
+      const randomData = generateRandomData();
       
-      if (cards.length > 0) {
-        const randomData = generateRandomData();
-        
-        chrome.storage.local.set({
-          generatedCards: cards,
-          randomData: randomData
-        });
-        
-        callback({ success: true, cards: cards });
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        chrome.tabs.sendMessage(stripeTabId, { 
-          action: 'fillForm' 
-        });
-        
-      } else {
-        callback({ success: false, error: 'No cards generated' });
-      }
+      chrome.storage.local.set({
+        generatedCards: cards,
+        randomData: randomData
+      });
+      
+      callback({ success: true, cards: cards });
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      chrome.tabs.sendMessage(stripeTabId, { 
+        action: 'fillForm' 
+      });
+      
     } else {
-      callback({ success: false, error: 'Failed to retrieve cards' });
+      callback({ success: false, error: 'No cards generated from API' });
     }
     
   } catch (error) {
     callback({ success: false, error: error.message });
   }
-}
-
-function fillBINAndGenerate(bin) {
-  const binInput = document.getElementById('bin');
-  if (binInput) {
-    binInput.value = bin;
-    binInput.dispatchEvent(new Event('input', { bubbles: true }));
-    
-    setTimeout(() => {
-      const generateBtn = document.querySelector('button[type="submit"]');
-      if (generateBtn) {
-        generateBtn.click();
-      }
-    }, 500);
-  }
-}
-
-function getGeneratedCards() {
-  const resultTextarea = document.getElementById('result');
-  if (resultTextarea) {
-    return resultTextarea.value;
-  }
-  return '';
-}
-
-function parseCards(cardsText) {
-  if (!cardsText) return [];
-  
-  const lines = cardsText.trim().split('\n');
-  const cards = [];
-  
-  lines.forEach((line, idx) => {
-    if (line.trim()) {
-      const parts = line.trim().split('|');
-      if (parts.length === 4) {
-        cards.push({
-          serial_number: idx + 1,
-          card_number: parts[0],
-          expiry_month: parts[1],
-          expiry_year: parts[2],
-          cvv: parts[3],
-          full_format: line.trim()
-        });
-      }
-    }
-  });
-  
-  return cards;
 }
 
